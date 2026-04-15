@@ -3,20 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <meta name="description" content="AuraLine — AR Indoor Navigation. Scan your ticket and follow the light." />
-    <meta name="theme-color" content="#000000" />
-    <!-- Prevent iOS bounce / overscroll in AR mode -->
+
+    <!-- SEO & Description -->
+    <meta name="description" content="SafeLine — WebAR Indoor Navigation System. Scan your transit ticket and follow a glowing 3D path to your platform or gate in real time." />
+    <meta name="keywords" content="AR navigation, indoor navigation, WebAR, transit, SafeLine, augmented reality" />
+    <meta name="author" content="SafeLine Team" />
+    <meta name="theme-color" content="#000008" />
+
+    <!-- Open Graph (for sharing / judges viewing the link) -->
+    <meta property="og:title" content="SafeLine · WebAR Indoor Navigator" />
+    <meta property="og:description" content="Scan a transit ticket and follow a glowing AR path to your destination. No app install needed — runs in the browser." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/favicon.svg" />
+
+    <!-- PWA / Mobile -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>AuraLine · AR Navigator</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SafeLine" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Permissions policy — needed for camera in WebAR context -->
+    <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()" />
+
+    <title>SafeLine · WebAR Indoor Navigator</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <style>
-      /* Critical: no flash of white before React mounts */
+      /* Critical: prevent flash of white before React mounts */
       html, body, #root {
         margin: 0; padding: 0;
-        background: #000;
+        background: #000008;
         height: 100%;
         overflow: hidden;
+        font-family: 'Inter', system-ui, sans-serif;
       }
     </style>
   </head>
