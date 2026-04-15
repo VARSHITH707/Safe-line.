@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import ARScene        from '../three/ARScene.jsx';
 import TicketOverlay  from './TicketOverlay.jsx';
-import { useGuidanceEngine } from '../utils/guidanceEngine.js';
+import { useGuidanceEngine }             from '../utils/guidanceEngine.js';
+import { logSessionStart, logSessionEnd } from '../utils/firebase.js';
 
 /**
  * ARViewport — SafeLine
@@ -21,6 +22,22 @@ export default function ARViewport({ ticket, onExit }) {
 
   // Guidance engine — ticket object contains all path data
   const { guidance, directionIcon } = useGuidanceEngine(ticket);
+
+  // Firebase session tracking
+  const sessionIdRef = useRef(null);
+  useEffect(() => {
+    logSessionStart(ticket).then((id) => { sessionIdRef.current = id; });
+    return () => { logSessionEnd(sessionIdRef.current, false); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Log completion when destination reached
+  useEffect(() => {
+    if (guidance.reached && sessionIdRef.current) {
+      logSessionEnd(sessionIdRef.current, true);
+      sessionIdRef.current = null;
+    }
+  }, [guidance.reached]);
 
   // Journey progress (0 = start, 1 = arrived) — drives camera along spline
   const progress = ticket.totalDistance
