@@ -1,12 +1,15 @@
 {
-  "name": "auraline-web",
+  "name": "safeline-web",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@react-three/drei": "^9.109.2",
@@ -23,9 +26,11 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.40",
     "tailwindcss": "^3.4.9",
-    "vite": "^5.3.5"
+    "vite": "^5.3.5",
+    "vitest": "^4.1.4"
   }
 }

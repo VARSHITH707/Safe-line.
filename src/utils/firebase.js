@@ -1,59 +1,103 @@
 /**
  * firebase.js — SafeLine Firebase Integration
  *
- * Services:
- *  - Analytics:  logs screen views + user events
- *  - Firestore:  stores navigation sessions (real backend data)
+ * Google Services used:
+ *  1. Firebase Analytics  — tracks navigation events
+ *  2. Firestore           — stores navigation sessions (real backend)
+ *  3. Firebase Auth       — Google Sign-In support
  *
- * Every QR scan creates a Firestore document under /sessions/{id}
- * tracking: destination, color, distance, timestamp, turnCount.
+ * Config loaded from environment variables (VITE_FIREBASE_*) for security.
  */
 
-import { initializeApp }              from 'firebase/app';
-import { getAnalytics, logEvent }     from 'firebase/analytics';
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { initializeApp }                             from 'firebase/app';
+import { getAnalytics, logEvent }                    from 'firebase/analytics';
+import { getFirestore, collection, addDoc,
+         updateDoc, doc, serverTimestamp }           from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup,
+         signOut, onAuthStateChanged }               from 'firebase/auth';
 
-// ── Firebase config ────────────────────────────────────────────────────────
+// ── Config from environment variables (never hardcoded) ───────────────────
 const firebaseConfig = {
-  apiKey:            'AIzaSyCsy5j_8OMUb0iAoP5IfSjrKfe9KLqd-u8',
-  authDomain:        'safeline-app-6a643.firebaseapp.com',
-  projectId:         'safeline-app-6a643',
-  storageBucket:     'safeline-app-6a643.firebasestorage.app',
-  messagingSenderId: '1030561019680',
-  appId:             '1:1030561019680:web:67028d16681129c0220945',
-  measurementId:     'G-W8FLYMEZ9T',
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // ── Initialize ─────────────────────────────────────────────────────────────
-const app       = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db        = getFirestore(app);
+const app           = initializeApp(firebaseConfig);
+const analytics     = getAnalytics(app);
+const db            = getFirestore(app);
+const auth          = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { app, analytics, db };
+export { app, analytics, db, auth };
 
 // ── Analytics helpers ──────────────────────────────────────────────────────
-/** Log any custom event to Firebase Analytics */
+/**
+ * Log a custom event to Firebase Analytics.
+ * @param {string} name    - event name
+ * @param {object} params  - event parameters
+ */
 export function logAnalyticsEvent(name, params = {}) {
   try { logEvent(analytics, name, params); } catch (e) { /* silently ignore */ }
 }
 
+// ── Firebase Auth — Google Sign-In ─────────────────────────────────────────
+/**
+ * Sign in with Google via popup.
+ * Used to optionally identify users for session attribution.
+ * @returns {Promise<import('firebase/auth').User|null>}
+ */
+export async function signInWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    logAnalyticsEvent('login', { method: 'google' });
+    console.log('[SafeLine] Signed in:', result.user.displayName);
+    return result.user;
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      console.warn('[SafeLine] Sign-in failed:', err.message);
+    }
+    return null;
+  }
+}
+
+/**
+ * Sign out current user.
+ */
+export async function signOutUser() {
+  try {
+    await signOut(auth);
+    logAnalyticsEvent('logout');
+  } catch (err) {
+    console.warn('[SafeLine] Sign-out failed:', err.message);
+  }
+}
+
+/**
+ * Subscribe to auth state changes.
+ * @param {function} callback - called with (user | null)
+ * @returns {function} unsubscribe function
+ */
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
+
 // ── Firestore session logging ──────────────────────────────────────────────
 /**
- * Called when a ticket is scanned / route generated.
- * Creates a new session document in Firestore and returns its ID.
+ * Log a new navigation session to Firestore when a ticket is scanned.
+ * Creates a document in /sessions/{auto-id}.
  *
- * @param {object} ticket — full ticket object from generateTicket()
- * @returns {Promise<string|null>} Firestore document ID, or null on error
+ * @param {object} ticket - full ticket from generateTicket()
+ * @returns {Promise<string|null>} Firestore document ID
  */
 export async function logSessionStart(ticket) {
   try {
+    const user = auth.currentUser;
     const docRef = await addDoc(collection(db, 'sessions'), {
       ticketId:      ticket.id,
       destination:   ticket.destination,
@@ -62,8 +106,9 @@ export async function logSessionStart(ticket) {
       turnCount:     ticket.turnDirs?.length ?? 0,
       gate:          ticket.gate,
       status:        'active',
+      userId:        user?.uid ?? 'anonymous',
       startedAt:     serverTimestamp(),
-      platform:      navigator.userAgent,
+      platform:      navigator.userAgent.substring(0, 200),
     });
 
     logAnalyticsEvent('navigation_start', {
@@ -80,11 +125,11 @@ export async function logSessionStart(ticket) {
 }
 
 /**
- * Called when user reaches destination or exits AR.
- * Updates the session document with completion status.
+ * Mark a navigation session as completed or exited.
+ * Updates the document status and records timestamp.
  *
- * @param {string} sessionId  — Firestore document ID from logSessionStart
- * @param {boolean} completed — true if destination reached, false if exited early
+ * @param {string}  sessionId - Firestore document ID
+ * @param {boolean} completed - true = reached destination
  */
 export async function logSessionEnd(sessionId, completed) {
   if (!sessionId) return;
