@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="description" content="AuraLine — AR Indoor Navigation. Scan your ticket and follow the light." />
+    <meta name="theme-color" content="#000000" />
+    <!-- Prevent iOS bounce / overscroll in AR mode -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>AuraLine · AR Navigator</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <style>
+      /* Critical: no flash of white before React mounts */
+      html, body, #root {
+        margin: 0; padding: 0;
+        background: #000;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

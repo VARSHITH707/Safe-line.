@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #000008;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Neon text glow utility ── */
+.glow-neon   { text-shadow: 0 0 10px #39ff14, 0 0 30px #39ff1460; }
+.glow-cyan   { text-shadow: 0 0 10px #00f5ff, 0 0 30px #00f5ff60; }
+.glow-violet { text-shadow: 0 0 10px #8b5cf6, 0 0 30px #8b5cf660; }
+
+/* ── Glassmorphism card ── */
+.glass {
+  background: rgba(10, 10, 26, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ── Neon border gradient ── */
+.border-neon-gradient {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.border-neon-gradient::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #39ff14, #00f5ff, #8b5cf6);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Scan animation line ── */
+.scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #39ff14, transparent);
+  animation: scanLine 2s linear infinite;
+  opacity: 0.7;
+}
+
+/* ── AR canvas must be full-screen & on top ── */
+.ar-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none; /* let video below receive touch if needed */
+}
+.ar-canvas canvas {
+  pointer-events: auto;
+}
+
+/* ── Camera video fill ── */
+.camera-feed {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 5;
+}
+
+/* ── Scrollbar hide for overlay panels ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
